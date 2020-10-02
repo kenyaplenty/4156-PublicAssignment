@@ -29,7 +29,7 @@ public class Message {
    * Returns whether or not the move is valid. 
    * @return the moveValidity
    */
-  public boolean isMoveValidity() {
+  public boolean getMoveValidity() {
     return moveValidity;
   }
 

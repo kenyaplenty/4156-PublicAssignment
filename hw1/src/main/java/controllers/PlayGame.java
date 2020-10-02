@@ -10,7 +10,7 @@ import models.Move;
 import models.Player;
 import org.eclipse.jetty.websocket.api.Session;
 
-class PlayGame {
+public class PlayGame {
 
   private static final int PORT_NUMBER = 8080;
 
@@ -96,6 +96,10 @@ class PlayGame {
       }
       ctx.result(gson.toJson(moveMessage));
     }); 
+    
+    app.get("/getgameboard", ctx -> {
+      ctx.result(gson.toJson(gameBoard));
+    });
 
     // Web sockets - DO NOT DELETE or CHANGE
     app.ws("/gameboard", new UiWebSocket());
