@@ -273,5 +273,29 @@ public class GameBoard {
     return moveMessage; 
   }
   
-  
+  /**
+   * Prints the gameboard.
+   */
+  public String toString() {
+    String gameBoardString = ""; 
+    for (int i = 0; i < 3; i++)  {
+      for (int j = 0; j < 3; j++) {
+        gameBoardString += Character.toString(boardState[i][j]) + " ";
+      }
+    }
+    gameBoardString += "\n"; 
+    if (getP1() != null)  {
+      gameBoardString += "player1: " + getP1().getId() + ", " + getP1().getType() + "\n"; 
+    }
+    if (getP2() != null) {
+      gameBoardString += "player2: " + getP2().getId() + ", " + getP2().getType() + "\n"; 
+    }
+    
+    gameBoardString += "gameStarted: " + gameStarted + "\n"; 
+    gameBoardString += "turn: " + turn + "\n"; 
+    gameBoardString += "winnner: " + winner + "\n"; 
+    gameBoardString += "isDraw " + isDraw + "\n"; 
+    
+    return gameBoardString; 
+  }
 }

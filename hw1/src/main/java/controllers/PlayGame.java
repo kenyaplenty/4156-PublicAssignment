@@ -3,12 +3,14 @@ package controllers;
 import com.google.gson.Gson;
 import io.javalin.Javalin;
 import java.io.IOException;
+import java.sql.Connection;
 import java.util.Queue;
 import models.GameBoard;
 import models.Message;
 import models.Move;
 import models.Player;
 import org.eclipse.jetty.websocket.api.Session;
+import utils.GameDatabase;
 
 public class PlayGame {
 
@@ -23,8 +25,6 @@ public class PlayGame {
   private static Player player1;
   
   private static Player player2; 
-  
-  private static int gameSessionTurn; 
 
   /** Main method of the application.
    * @param args Command line arguments
@@ -40,9 +40,15 @@ public class PlayGame {
       ctx.result(ctx.body());
     });
     
+    Connection conn = GameDatabase.createConnection(); 
+    gameBoard = GameDatabase.restoreGameBoard(conn, gameBoard);
+    System.out.println(gameBoard); 
+        
     // Redirects the user to a new game
     app.get("/newgame", ctx -> {
-      ctx.redirect("/tictactoe.html");
+      GameDatabase.resetTables(conn);
+      gameBoard = null; 
+      ctx.redirect("/tictactoe.html"); 
     }); 
     
     // Adds player 1 to the game and sends a link for player to join
@@ -51,15 +57,18 @@ public class PlayGame {
       player1 = new Player(player1Symbol, 1); 
       gameBoard = new GameBoard(); 
       gameBoard.setP1(player1);
+      GameDatabase.addPlayer(conn, player1); 
       ctx.result(gson.toJson(gameBoard)); 
     });
     
+    
     // Adds player 2 to the game and starts the game
     app.get("/joingame", ctx -> {
-      char player2Symbol = player1.getType() == 'X' ? 'O' : 'X';
+      char player2Symbol = gameBoard.getP1().getType() == 'X' ? 'O' : 'X';
       player2 = new Player(player2Symbol, 2); 
       gameBoard.setP2(player2);
       gameBoard.setGameStarted(true); 
+      GameDatabase.addPlayer(conn, player2);
       sendGameBoardToAllPlayers(gson.toJson(gameBoard));
       ctx.redirect("/tictactoe.html?p=2");
     });
@@ -69,23 +78,28 @@ public class PlayGame {
       int playersTurn = Integer.parseInt(ctx.pathParam("playerId")); 
       int moveX = Character.getNumericValue(ctx.body().charAt(2)); 
       int moveY = Character.getNumericValue(ctx.body().charAt(ctx.body().length() - 1));
+      
       Move currentMove; 
+      
       if (playersTurn == 1) {
         currentMove = new Move(gameBoard.getP1(), moveX, moveY);
       } else {
         currentMove = new Move(gameBoard.getP2(), moveX, moveY);
       }
+      
       Message moveMessage; 
-      if (gameBoard.isValidMove(currentMove)) {
+      if (gameBoard.isValidMove(currentMove)) { 
         gameBoard.addMoveToBoardAndSwitchesTurns(currentMove); 
-        if (gameBoard.playerWonGame(player1)) {
-          gameBoard.endsGameAndSetsWinner(player1);
+        
+        if (gameBoard.playerWonGame(gameBoard.getP1())) {
+          gameBoard.endsGameAndSetsWinner(gameBoard.getP1());
         }  
-        if (gameBoard.playerWonGame(player2)) {
-          gameBoard.endsGameAndSetsWinner(player2);
+        if (gameBoard.playerWonGame(gameBoard.getP2())) {
+          gameBoard.endsGameAndSetsWinner(gameBoard.getP2());
         }
+        
         moveMessage = gameBoard.generateValidMoveMessage();
-        sendGameBoardToAllPlayers(gson.toJson(gameBoard));
+       
         
       } else if (gameBoard.isGameDraw()) {
         gameBoard.setGameDraw();
@@ -94,6 +108,9 @@ public class PlayGame {
       } else {
         moveMessage = gameBoard.generateInvalidMoveMessage();
       }
+      sendGameBoardToAllPlayers(gson.toJson(gameBoard));
+      GameDatabase.addMoveData(conn, currentMove);
+      
       ctx.result(gson.toJson(moveMessage));
     }); 
     
@@ -119,7 +136,15 @@ public class PlayGame {
       }
     }
   }
-
+  
+  // Restarts the app
+  public static void startGame() {
+    main(null); 
+    
+  }
+  
+  
+  // Simulates the app crashing
   public static void stop() {
     app.stop();
   }

@@ -90,7 +90,6 @@ class GameTest {
     // ---------------------------- GSON Parsing -------------------------
 
     // GSON use to parse data to object
-    Gson gson = new Gson();
     GameBoard gameBoard = gson.fromJson(jsonObject.toString(), GameBoard.class);
     Player player1 = gameBoard.getP1();
 
@@ -255,6 +254,8 @@ class GameTest {
     JSONObject boardResponseObject = new JSONObject(boardResponse);
     
     assertEquals(false, boardResponseObject.get("gameStarted"));
+    assertEquals(1, boardResponseObject.get("winner"));
+    
     System.out.println("------- Test Player1 Can Win Game -------");
     
   }
@@ -281,6 +282,7 @@ class GameTest {
     JSONObject boardResponseObject = new JSONObject(boardResponse); 
     
     assertEquals(false, boardResponseObject.get("gameStarted"));
+    assertEquals(2, boardResponseObject.get("winner"));
     
     System.out.println("------ Test Player 2 Can Win Game -------"); 
     
